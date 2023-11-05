@@ -1,0 +1,243 @@
+---
+title: "Time Series Econometrics: Homework assignment 4"
+author: "Joaquín Barrutia Álvarez"
+output: 
+  pdf_document:
+    toc: false
+    toc_depth: 1
+    number_sections: true
+geometry: margin=1in
+urlcolor: blue
+header-includes:
+- \usepackage{float}
+- \usepackage{graphicx}
+- \usepackage{amsmath}
+- \usepackage{relsize}
+- \usepackage{cancel}
+- \usepackage{booktabs}
+fig_caption: yes
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+# This chunk sets echo = TRUE as default, that is, print all code.
+# knitr::opts_chunk$set can be used to set other notebook generation options, too.
+# include=FALSE inside curly brackets makes this block not be included in the pdf.
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.pos = "!H", out.extra = "")
+library(ggplot2)
+library(readxl)
+library(vars)
+library(irr)
+library(tidyverse)
+library(readr)
+library(forecast)
+library(kableExtra)
+library(urca)
+library(fUnitRoots)
+library(tseries)
+```
+
+\newcommand{\vc}[1] { \mathbf{#1} }
+\newcommand{\vs}[1] { \boldsymbol{#1} }
+
+# Problem 1
+
+Assume the model
+
+$$
+\begin{aligned}
+\Delta \vc y_t = \vs \zeta_0 \vc y_{t-1}+ \vs \epsilon_t
+\end{aligned}
+$$
+
+where 
+
+$$
+\begin{aligned}
+\vc y_t = \begin{pmatrix}
+i_t^{1W}\\
+i_t^{10Y}
+\end{pmatrix}
+\end{aligned}
+$$
+i.e. a $2\times1$ vector with one-week and ten-year interest rates. The error terms $\epsilon_t$ are iid $N(\vc0, \vs \Omega)$, $t=1,2,\dots, T$.
+
+## Plot the series. Could these potentially be cointegrated?
+
+The first step in the analysis was to plot the complete series from 1987 to 2020. It's important to note that starting in 2020, Riksbank ceased estimating the STIBOR rate, delegating this responsibility to the Swedish Financial Benchmark Facility (SFBF).
+
+When plotting the complete series, a significant outlier in 1992 is easily noticeable. Further investigation revealed that in the fall of 1992, the Riksbank raised the interest rate to 500 percent in an attempt to defend the krona. However, this defense was unsuccessful, and the krona's exchange rate was allowed to float freely. This dramatic development was rooted in the severe international recession of the early 1990s and the repercussions of German reunification. During the early 1990s, the reunification of Germany and the exchange of Ostmark for D-mark at a 1:1 ratio strained currency arrangements in Europe. For this reason, I decided to filter out the observations from the 1990s, as they represent a crisis period that could bias our analysis.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height= 4.1}
+# Read data
+df_stibor <- read_excel("ADVANCED RESULT_2023-10-24_16_23.xlsx")
+df_gvb <- read_excel("ADVANCED RESULT_2023-10-24_16_22.xlsx")
+
+# Create time series for both variables
+ts_stibor <- ts(df_stibor$STIBOR %>% as.numeric(), 
+                start = c(1987, 10), end = c(2020, 7), frequency = 12)
+ts_gvb <- ts(df_gvb$GVB %>% as.numeric(), 
+             start = c(1987, 10), end = c(2020, 7), frequency = 12)
+
+ts_rates <- ts.union(ts_stibor, ts_gvb)
+
+# Plot the series
+plot.ts(ts_rates, plot.type = "multiple",
+        main = 'STIBOR 1 week and GVB 10 year')
+```
+
+Subsequently, when plotting the series from the 2000s onward, another outlier in 2008 becomes noticeable. These data points are a result of the Global Financial Crisis during those years. Therefore, I made the decision to exclude them from the dataset and work with a final series starting in 2012, when the economy was essentially recovered. With this subset, we can commence our analysis.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height= 4}
+# Filter data
+ts_stibor <- window(ts_stibor, start = c(2000, 1))
+ts_gvb <- window(ts_gvb, start = c(2000, 1))
+
+ts_rates <- ts.union(ts_stibor, ts_gvb)
+
+# Plot
+plot.ts(ts_rates, plot.type = "multiple",
+        main = 'STIBOR 1 week and GVB 10 year (January 1995 onward)')
+```
+
+By plotting the series from 2012 onward we can see that both of them seem non-stationary. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height= 4}
+# Filter data
+ts_stibor <- window(ts_stibor, start = c(2012, 1))
+ts_gvb <- window(ts_gvb, start = c(2012, 1))
+
+ts_rates <- ts.union(ts_stibor, ts_gvb)
+
+# Plot
+plot.ts(ts_rates, plot.type = "multiple",
+        main = 'STIBOR 1 week and GVB 10 year (January 2012 onward)')
+```
+
+We can also observe that both series move together over a long period, suggesting that they share common trends. The series appear to move in a parallel fashion, indicating some form of co-movement over time, which can make us think that they could be cointegrated.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height= 4}
+# Filtrar las series temporales desde enero de 2012
+ts_stibor <- window(ts_stibor, start = c(2012, 1))
+ts_gvb <- window(ts_gvb, start = c(2012, 1))
+
+# Crear un marco de datos con las series de tiempo
+data <- data.frame(
+  Date = time(ts_stibor),
+  STIBOR = ts_stibor,
+  GVB = ts_gvb
+)
+
+# Crear un gráfico utilizando ggplot2 y agregar líneas de tendencia
+ggplot(data, aes(x = Date)) +
+  geom_line(aes(y = STIBOR, color = "STIBOR")) +
+  geom_smooth(aes(y = STIBOR), method = "lm", color = "blue", se = FALSE) +
+  geom_line(aes(y = GVB, color = "GVB")) +
+  geom_smooth(aes(y = GVB), method = "lm", color = "red", se = FALSE) +
+  labs(x = "Fecha", y = "Interest Rate", color = "Variable") +
+  scale_color_manual(values = c("STIBOR" = "blue", "GVB" = "red")) +
+  ggtitle("STIBOR 1 week and GVB 10 year (January 2012 onward)")
+
+```
+
+We can further look at the spread between the two interest rates and see if it seems stationary. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height= 4}
+plot.ts(ts_rates[,1]-ts_rates[,2],
+        main = 'Differences STIBOR 1 week and GVB 10 year', ylab = 'i_1w - i_10Y')
+
+trend <- lm((ts_rates[,1]-ts_rates[,2]) ~ time(ts_rates[,1]-ts_rates[,2]))
+abline(trend, col = "blue")
+```
+
+Determining cointegration usually requires more than just a visual inspection. Therefore, We can test stationarity of the interest rates and the difference using Augmented Dickey-Fuller tests:
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE, fig.height= 4, eval=FALSE}
+adfTest(ts_stibor, lags = 12, type = "ct") 
+adfTest(ts_stibor, lags = 12, type = "c") 
+adfTest(ts_gvb, lags = 12, type = "ct") 
+adfTest(ts_gvb, lags = 12, type = "c") 
+adfTest((ts_rates[,1]-ts_rates[,2]), lags = 12, type = "ct") 
+adfTest((ts_rates[,1]-ts_rates[,2]), lags = 12, type = "c") 
+```
+
+Even though there is evidence that suggest that the interest rates are non-stationary, the spread between the two interest rates also appears to be non stationary, this might make us think that the series are not cointegrated, as cointegration requires that there exists $c \in \mathbb{R}$ where $i_t^{1W} -  c \cdot i_t^{10Y} \sim I(0)$
+
+## Estimate the cointegrating rank of the system by a sequence of tests.
+
+Using the AIC, we can determine the lag order of the VAR process which in this case is $K = 2$. 
+We can now estimate the cointegration rank of the system using the results of the Johansen’s test with $K = 2$.
+
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE, fig.height= 4}
+
+var <- VAR(ts_rates, type='const', lag.max=12)
+var$p
+
+
+cointegration_test <- ca.jo(ts_rates, type = "trace", ecdet = "none", K = 2)
+summary(cointegration_test)
+```
+
+In this case, there are two eigenvalues: 0.10901182 and 0.0386212. The first hypothesis, $r = 0$, tests for the presence of cointegration, since it is not statistically significant at any level we cannot reject the null hypothesis. The second hypothesis, $r  \leq  1$, tests against the alternative hypothesis of $r  >  1$, since it is not statistically significant at any level we cannot reject the null hypothesis.Therefore, we can conclude that the rank of the matrix is either  1 or 0. Therefore, we can conclude that the series are probably not cointegrated because we cannot reject r=0.
+
+## Assume that the cointegrating rank is 1 and, using Johansen’s approach, test that $i_t^{1W} - i_t^{10Y}$ is a cointegrating relation, i.e. that the spread between the two interest rates is stationary
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE, fig.height= 4}
+M <- matrix(c(1, -1), nrow = 2)
+test_I1 <- blrtest(z = cointegration_test, H=M, r=1)
+summary(test_I1)
+```
+
+We can summarize the test results as:
+
+- The test results suggest that there is no cointegrating relation between the spread between the one-week interest rate and the ten-year interest rate. 
+
+- The likelihood ratio test with a p-value of 0.01 rejects the null hypothesis that the spread between the one-week interest rate and the ten-year interest rate is a cointegrating relation.
+
+## Test the same null hypothesis using a simple unit root test.
+
+The ADF test is used to test for unit roots in the data, which would indicate non-stationarity. By observing the p-value of the test we can conclude that there is no evidence to reject the null, meaning $i_t^{1W} - i_t^{10Y}$ may not be stationary.  
+
+```{r, warning=FALSE, message=FALSE, fig.height= 4}
+# Perform ADF test with a constant (intercept)
+adf_test_const <- adfTest((ts_rates[,1]-ts_rates[,2]), lags = 2, type = "c") 
+ 
+# Perform ADF test with a constant and trend
+adf_test_const_trend <-  adfTest((ts_rates[,1]-ts_rates[,2]), lags = 2, type = "ct") 
+
+adf_test_const_trend
+```
+
+We can also do an Engle-Granger test which involves regressing one time series on the other and then testing the stationarity of the residuals from the regression:
+ 
+```{r, warning=FALSE, message=FALSE, fig.height= 4}
+# Regress one series on the other
+regression_result <- lm(ts_stibor ~ ts_gvb)
+
+# Obtain the residuals from the regression
+residuals <- residuals(regression_result)
+
+# Perform ADF test with a constant 
+adf_test_residuals <-  adfTest(residuals, lags = 2, type = "c") 
+
+# Perform ADF test with a constant and trend
+adf_test_residuals <-  adfTest(residuals, lags = 2, type = "ct") 
+
+adf_test_residuals
+```
+
+The null hypothesis in the ADF test is that the data series is non-stationary, meaning it has a "unit root" and is not suitable for cointegration analysis. For two time series to be cointegrated, it is expected that the residual series resulting from the regression (as in the Engle-Granger test) should be stationary.
+
+Given the high p-value (0.8802), there is not enough statistical evidence to conclude that the residuals are stationary. This may indicate that the two time series of the interest rates are not cointegrated, and they do not exhibit a significant long-term relationship in their movements.
+
+\newpage
+\appendix
+# Appendix: Code
+
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
