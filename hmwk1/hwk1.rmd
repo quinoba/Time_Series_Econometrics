@@ -1,0 +1,530 @@
+---
+title: "Time Series Econometrics: Homework assignment 1"
+author: "Joaquín Barrutia Álvarez"
+output: 
+  pdf_document:
+    toc: false
+    toc_depth: 1
+    number_sections: true
+geometry: margin=1in
+urlcolor: blue
+header-includes:
+- \usepackage{float}
+- \usepackage{graphicx}
+- \usepackage{amsmath}
+- \usepackage{relsize}
+- \usepackage{cancel}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+# This chunk sets echo = TRUE as default, that is, print all code.
+# knitr::opts_chunk$set can be used to set other notebook generation options, too.
+# include=FALSE inside curly brackets makes this block not be included in the pdf.
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1 {#id1}
+
+Consider the second-order difference equation (p = 2)
+
+$$
+\begin{aligned}
+y_t=\phi_1y_{t-1}+\phi_2y_{t-2}+w_t
+\end{aligned}
+$$
+
+Using direct multiplication, show that
+
+## the effect on $y_{t+3}$ of a one-unit increase in $w_t$ is {#id1.1}
+  
+```{=tex}
+\begin{equation}\begin{aligned}\label{eq:1}
+\phi^3_1+2\phi_1\phi_2 
+\end{aligned}\end{equation}
+```
+
+**Answer**
+
+Using recursive substitution, we can expand $y_{t+1}$:
+
+$$
+\begin{aligned}
+y_{t+1}&=\phi_1 y_t + \phi_2 y_{t-1} + w_{t+1}\\
+&= \phi_1(\phi_1y_{t-1}+\phi_2y_{t-2}+w_t) +\phi_2y_{t-1}+w_{t+1}\\
+&=\phi^2_1y_{t-1}+\phi_1\phi_2y_{t-2}+\phi_1w_t +\phi_2y_{t-1}+w_{t+1}
+\end{aligned}
+$$
+
+Likewise, for $y_{t+2}$, and $y_{t+3}$ we have:
+
+$$
+\begin{aligned}
+y_{t+2}&=\phi_1 y_{t+1} + \phi_2 y_{t} + w_{t+2}\\
+&= \phi_1(\phi^2_1y_{t-1}+\phi_1\phi_2y_{t-2}+\phi_1w_t +\phi_2y_{t-1}+w_{t+1}) + \phi_2 (\phi_1y_{t-1}+\phi_2y_{t-2}+w_t) + w_{t+2}\\
+&= \phi^3_1y_{t-1}+\phi_1^2\phi_2y_{t-2}+\phi_1^2w_t +\phi_1\phi_2y_{t-1}+\phi_1w_{t+1} + \phi_1\phi_2y_{t-1}+\phi_2^2y_{t-2}+\phi_2w_t+w_{t+2}
+\end{aligned}
+$$
+$$
+\begin{aligned}
+y_{t+3}&=\phi_1 y_{t+2} + \phi_2 y_{t+1} + w_{t+3}\\
+&= \phi_1(\phi^3_1y_{t-1}+\phi_1^2\phi_2y_{t-2}+\phi_1^2w_t +\phi_1\phi_2y_{t-1}+\phi_1w_{t+1} + \phi_1\phi_2y_{t-1}+\phi_2^2y_{t-2}+\phi_2w_t+w_{t+2}) + \\&\phi_2 (\phi^2_1y_{t-1}+\phi_1\phi_2y_{t-2}+\phi_1w_t +\phi_2y_{t-1}+w_{t+1}) + w_{t+3}\\
+&=\phi^4_1y_{t-1}+\phi_1^3\phi_2y_{t-2}+\phi_1^3w_t +\phi_1^2\phi_2y_{t-1}+\phi_1^2w_{t+1} + \phi_1^2\phi_2y_{t-1}+\phi_1\phi_2^2y_{t-2}+\phi_1\phi_2w_t+\phi_1w_{t+2} + \\ 
+&\phi^2_1\phi_2y_{t-1}+\phi_1\phi_2^2y_{t-2}+\phi_1\phi_2w_t +\phi_2^2y_{t-1}+\phi_2w_{t+1} + w_{t+3}
+\end{aligned}
+$$
+Then:
+
+$$
+\begin{aligned}
+\frac{\partial{y_{t+3}}}{\partial{w_{t}}} = \phi^3_1+\phi_1\phi_2+ \phi_1\phi_2 = \phi^3_1+2\phi_1\phi_2
+\end{aligned}
+$$
+
+## the effect on $y_{t+4}$ of a one-unit increase in $w_t$ is {#id1.2}
+
+```{=tex}
+\begin{equation}\begin{aligned} \label{eq:2}
+\phi^4_1+3\phi^2_1\phi_2 + \phi^2_2
+\end{aligned}\end{equation}
+```
+
+**Answer**
+
+Following similar steps as in \ref{id1.1}
+
+$$
+\begin{aligned}
+y_{t+4}&=\phi_1 y_{t+3} + \phi_2 y_{t+2} + w_{t+4}\\
+&= \phi_1(\phi^4_1y_{t-1}+\phi_1^3\phi_2y_{t-2}+\phi_1^3w_t +\phi_1^2\phi_2y_{t-1}+\phi_1^2w_{t+1} + \phi_1^2\phi_2y_{t-1}+\phi_1\phi_2^2y_{t-2}+\phi_1\phi_2w_t+\phi_1w_{t+2} + \\ 
+&\phi^2_1\phi_2y_{t-1}+\phi_1\phi_2^2y_{t-2}+\phi_1\phi_2w_t +\phi_2^2y_{t-1}+\phi_2w_{t+1} + w_{t+3}) + \\
+& \phi_2(\phi^3_1y_{t-1}+\phi_1^2\phi_2y_{t-2}+\phi_1^2w_t +\phi_1\phi_2y_{t-1}+\phi_1w_{t+1} + \phi_1\phi_2y_{t-1}+\phi_2^2y_{t-2}+\phi_2w_t+w_{t+2}) + w_{t+4}
+\end{aligned}
+$$
+$$
+\begin{aligned}
+\frac{\partial{y_{t+4}}}{\partial{w_{t}}} = \phi^4_1+\phi^2_1\phi_2+ \phi^2_1\phi_2 + \phi^2_1\phi_2 + \phi^2_2 = \phi^4_1+3\phi_1^2\phi_2+ \phi^2_2
+\end{aligned}
+$$
+
+# Problem 2 {#id2}
+
+Consider the same difference equation
+
+$$
+\begin{aligned}
+y_t=\phi_1y_{t-1}+\phi_2y_{t-2}+w_t
+\end{aligned}
+$$
+
+where $\phi_1=3/4$ and $\phi_2=-1/8$.
+
+##  Using the eigenvalues of the matrix  $\boldsymbol{F}$, show that
+
+```{=tex}
+\begin{equation}\begin{aligned} \label{eq:3}
+\frac{\partial{y_{t+j}}}{\partial{w_{t}}} = \left(\frac{1}{2}\right)^{j-1}-\left(\frac{1}{4}\right)^j
+\end{aligned}\end{equation}
+```
+
+**Answer**
+
+Let:
+
+$$
+\begin{aligned}
+\boldsymbol{\xi_t} = \begin{bmatrix}
+y_t\\
+y_{t-1}
+\end{bmatrix}, \
+\;
+\boldsymbol{F} = \begin{bmatrix}
+\phi_1 & \phi_2\\
+1 & 0
+\end{bmatrix} = \begin{bmatrix}
+\frac{3}{4} & -\frac{1}{8}\\
+1 & 0
+\end{bmatrix} , \
+\;
+\boldsymbol{v_t} = \begin{bmatrix}
+w_t\\
+0
+\end{bmatrix},
+\end{aligned}
+$$
+Consider the following first-order vector difference equation:
+
+$$
+\begin{aligned}
+\boldsymbol{\xi_t} = \boldsymbol{F}\boldsymbol{\xi_{t_1}} + \boldsymbol{v_t}
+\end{aligned}
+$$
+Recall that the eigenvalues of a matrix $\boldsymbol{F}$ are those numbers $\lambda$ for which
+
+$$
+\begin{aligned}
+\mid \boldsymbol{F} - \boldsymbol{\lambda} \boldsymbol{I_2} \mid = \begin{vmatrix}
+     \phi_1 - \lambda & \phi_2 \\ 
+     1 & - \lambda 
+\end{vmatrix}  = 0
+\end{aligned}
+$$
+The two eigenvalues of $\boldsymbol{F}$ for the second-order difference equation are thus given by
+
+$$
+\begin{aligned}
+\lambda_1 = \frac{\phi_1+\sqrt{\phi^2_1+4\phi_2}}{2} = \frac{1}{2}\\
+\lambda_2 = \frac{\phi_1-\sqrt{\phi^2_1+4\phi_2}}{2} = \frac{1}{4}
+\end{aligned}
+$$
+we can characterize $\boldsymbol{F^j}$ in terms of the eigenvalues of $\boldsymbol{F}$ as
+
+$$
+\begin{aligned}
+\boldsymbol{F^j}= \boldsymbol{T}\boldsymbol{\Lambda^j}\boldsymbol{T^{-1}}
+\end{aligned}
+$$
+
+therefore:
+
+$$
+\begin{aligned}
+\boldsymbol{F^j}= \begin{bmatrix}
+t_{11} & t_{12}\\
+t_{21} & t_{22}
+\end{bmatrix}
+\begin{bmatrix}
+\lambda^j_{1} & 0\\
+0 & \lambda^j_{2}
+\end{bmatrix}
+\begin{bmatrix}
+t^{11} & t^{12}\\
+t^{21} & t^{22}
+\end{bmatrix}
+\end{aligned}
+$$
+from which the (1, 1) element of $\boldsymbol{F^j}$ is given by
+
+$$
+\begin{aligned}
+f^{(j)}_{11}= \underbrace{[t_{11}t^{11}]}_{c_1}\lambda^j_1+\underbrace{[t_{12}t^{21}]}_{c_2}\lambda^j_2
+\end{aligned}
+$$
+Using Proposition 1.2 on pp.12 in Hamilton
+
+$$
+\begin{aligned}
+c_1 = \frac{\lambda_1}{(\lambda_1-\lambda_2)}= \frac{\frac{1}{2}}{(\frac{1}{2}-\frac{1}{4})}= 2, \ \; c_2 = \frac{\lambda_2}{(\lambda_2-\lambda_1)}= \frac{\frac{1}{4}}{(\frac{1}{4}-\frac{1}{2})}= -1
+\end{aligned}
+$$
+The dynamic multiplier is given by:
+
+$$
+\begin{aligned}
+\frac{\partial{y_{t+j}}}{\partial{w_{t}}} = c_1\lambda^j_1 + c_2\lambda^j_2=2\left(\frac{1}{2}\right)^j+(-1)\left(\frac{1}{4}\right)^j= \left(\frac{1}{2}\right)^{j-1}-\left(\frac{1}{4}\right)^j
+\end{aligned}
+$$
+
+## For j = 3 and j = 4, verify that (\ref{eq:1}) and (\ref{eq:2}) produce the same results as (\ref{eq:3})
+
+**Answer**
+
+Yes, (\ref{eq:1}) and (\ref{eq:2}) produce the same results as (\ref{eq:3}).
+
+$$
+\begin{aligned}
+\frac{\partial{y_{t+3}}}{\partial{w_{t}}} = \left(\frac{1}{2}\right)^{2}-\left(\frac{1}{4}\right)^3=\frac{15}{64}\\
+\frac{\partial{y_{t+4}}}{\partial{w_{t}}} = \left(\frac{1}{2}\right)^{3}-\left(\frac{1}{4}\right)^4=\frac{31}{256}
+\end{aligned}
+$$
+
+## Is the system stable? Motivate your answer.
+
+**Answer**
+
+Given that the two eigenvalues of $\boldsymbol{F}$ are real (i.e., $\phi_1^2 + 4\phi_2 = \frac{1}{16} > 0$), and the two eigenvalues are less than 1 in absolute value, then the system is stable.
+
+# Problem 3
+
+Let $\{y_t\}^\infty_t=\infty$ be given by
+
+$$
+\begin{aligned}
+z_s=\begin{pmatrix}
+y_{2s-1}\\
+y_{2s}
+\end{pmatrix}, \ \; s= 0, \pm1, \pm1, \ldots
+\end{aligned}
+$$
+
+where $z_s$ is iid $N(\boldsymbol{0}, \boldsymbol{\Sigma})$, with
+
+$$
+\begin{aligned}
+\boldsymbol{\Sigma} = \begin{pmatrix}
+1 & \gamma\\
+\gamma & 1
+\end{pmatrix}
+\end{aligned}
+$$
+
+Using standard results for the multivariate normal distribution,
+
+
+## Verify that $y_t \sim N(0,1)$ for all $t = 0, \pm1, \pm2,\ldots$
+
+**Answer**
+
+We know that if $\boldsymbol{Y} = \boldsymbol{c} + \boldsymbol{B} \boldsymbol{X}$ is an affine transformation of $\boldsymbol{X} \sim N(\boldsymbol{\mu}, \boldsymbol{\Sigma})$ then:
+
+$$
+\begin{aligned}
+{\displaystyle \mathbf {Y} \sim {N}\left(\mathbf {c} +\mathbf {B} {\boldsymbol {\mu }},\mathbf {B} {\boldsymbol {\Sigma }}\mathbf {B} ^{\rm {T}}\right)}.
+\end{aligned}
+$$
+In particular, any subset of the Xi has a marginal distribution that is also multivariate normal. Therefore Since $z_s$ is iid and $N(\boldsymbol{0}, \boldsymbol{\Sigma})$
+
+$$
+\begin{aligned}
+y_t = \mathbf {B} \mathbf {z}_{t=2s} = \left(0,1\right)\begin{pmatrix}
+y_{t-1}\\
+y_{t}
+\end{pmatrix} = y_t
+\\
+\mathbf {B} \boldsymbol {\mu} = \left(0,1\right) \begin{pmatrix}
+0 \\
+0
+\end{pmatrix} = 0
+\\
+\mathbf {B} \boldsymbol {\Sigma }\mathbf {B}^T = \left(0,1\right) \begin{pmatrix}
+1 & \gamma\\
+\gamma & 1 
+\end{pmatrix}
+\begin{pmatrix}
+0 \\
+1
+\end{pmatrix} = 1
+\\
+y_t  \sim N(0,1) \; \forall t = \pm1, \pm2,\ldots
+\end{aligned}
+$$
+
+## show that if $\gamma \neq 0$, then $\{y_t\}^\infty_{t=\infty}$ is neither strictly stationary nor covariance stationary
+
+**Answer**
+
+We know that
+
+$$
+\begin{aligned}
+{\displaystyle \mathbf {z_s} \sim {N}\left(\mathbf {0},\mathbf {\Sigma}\right)}.
+\end{aligned}
+$$
+
+therefore
+
+$$
+\begin{aligned}
+{\displaystyle \mathbf {z_1} = \begin{pmatrix}
+y_1 \\
+y_2
+\end{pmatrix} \sim {N}\left(\mathbf {0},\mathbf {\Sigma}\right)}.
+\end{aligned}
+$$
+then we can compute the covariance of $y_1$ and $y_2$
+
+$$
+cov\left(y_1, y_2 \right)= \gamma
+$$
+
+Using $\left(y_2, y_3 \right)^{\prime}$ we can also get the covariance of $y_2$ and $y_3$
+
+
+$$
+\begin{aligned}
+cov\left(y_2, y_3 \right)= E[y_2y_3]-E[y_2]E[y_3]\\
+E[y_2] = 0, \ \, E[y_3] = 0
+\end{aligned}
+$$
+then by independence  we have
+$$
+cov\left(y_2, y_3 \right)= E[y_2y_3] = E[y_2]E[y_3] =0
+$$
+Then since $cov\left(y_2, y_3 \right) = 0 \neq \gamma = cov\left(y_1, y_2 \right)$, $y_t$ is not stationary if $\gamma \neq 0$.
+
+
+# Problem 4
+
+Let $\{\epsilon_t\}^\infty_{t=\infty}$  be a white noise process and $\theta \neq 0$. Consider the two $MA(1)$ processes $\{y_t\}^\infty_{t=\infty}$ and $\{\tilde{y}_t\}^\infty_{t=\infty}$ given by
+
+$$
+y_t =\mu+\epsilon_t+\theta\epsilon_{t-1}
+$$
+and
+
+$$
+\tilde{y}_t = \mu+\tilde{\epsilon}_t+\tilde{\theta}\tilde{\epsilon}_{t-1}
+$$
+
+respectively, where  $\tilde\epsilon_t=\theta\epsilon$ and $\tilde\theta = 1/\theta$.
+
+## Verify that $E(y_t)= E(\tilde{y}_t)=\mu$ 
+
+**Answer**
+
+$$
+\begin{aligned}
+E[y_t] &= E[\mu + \epsilon_t + \theta \epsilon_{t-1}]\\
+&=E[\mu] + \underbrace{E[\epsilon_t]}_{0} + \theta \underbrace{E[\epsilon_{t-1}]}_{0} \\
+&= \mu
+\end{aligned}
+$$
+
+
+$$
+\begin{aligned}
+E[\tilde{y}_t] &= E[\mu+\tilde{\epsilon}_t+\tilde{\theta}\tilde{\epsilon}_{t-1}]\\
+&= E[\mu + \theta\epsilon_t + \frac{1}{\theta}\theta \epsilon_{t-1}]\\
+&=E[\mu] + \theta\underbrace{E[\epsilon_t]}_{0} + \frac{\theta}{\theta} \underbrace{E[\epsilon_{t-1}]}_{0} \\
+&= \mu
+\end{aligned}
+$$
+
+It follows that
+
+$$
+\begin{aligned}
+E[y_t] = E[\tilde{y}_t] = \mu
+\end{aligned}
+$$
+
+## Verify that $E(y_t-\mu)(y_{t-j}-\mu)=E(\tilde{y}_t - \mu)(\tilde{y}_{t-j}-\mu)$, for $j=0,1,2,\ldots$
+
+
+**Answer**
+
+$$
+\begin{aligned}
+E(y_t-\mu)(y_{t-j}-\mu) &= cov(y_t, y_{t-j})\\
+&= cov(\mu + \epsilon_t + \theta \epsilon_{t-1}, \mu + \epsilon_{t-j} + \theta \epsilon_{t-j-1})\\
+&=  cov(\epsilon_t + \theta \epsilon_{t-1}, \epsilon_{t-j} + \theta \epsilon_{t-j-1})\\
+&= \underbrace{cov(\epsilon_t, \epsilon_{t-j} + \theta \epsilon_{t-j-1})}_{=\begin{cases}
+  \sigma^2  & j = 0 \\
+ 0 & j\neq0
+\end{cases}} + \underbrace{cov(\theta \epsilon_{t-1}, \epsilon_{t-j} + \theta \epsilon_{t-j-1})}_{=\begin{cases}
+  \theta^2\sigma^2  & j = 0 \\
+ \theta \sigma^2 & j=1 \\
+ 0 & o.c. \\
+\end{cases}}\\
+cov({y}_t, {y}_{t-j}) &= \begin{cases}
+  (1+\theta^2 )\sigma^2  & j = 0 \\
+ \theta\sigma^2 & j=1 \\
+ 0 & o.c.
+\end{cases}
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+E(\tilde{y}_t-\mu)(\tilde{y}_{t-j}-\mu) &= cov(\tilde{y}_t, \tilde{y}_{t-j})\\
+&= cov(\mu+\tilde{\epsilon}_t+\tilde{\theta}\tilde{\epsilon}_{t-1}, \mu+\tilde{\epsilon}_{t-j}+\tilde{\theta}\tilde{\epsilon}_{t-j-1})\\
+&=  cov(\theta\epsilon_t +  \epsilon_{t-1}, \theta\epsilon_{t-j} +  \epsilon_{t-j-1})\\
+&= \underbrace{cov(\theta\epsilon_t, \theta\epsilon_{t-j} +\epsilon_{t-j-1})}_{=\begin{cases}
+  \theta^2\sigma^2  & j = 0 \\
+ 0 & j\neq0
+\end{cases}} + \underbrace{cov(\epsilon_{t-1}, \theta\epsilon_{t-j} + \epsilon_{t-j-1})}_{=\begin{cases}
+  \sigma^2  & j = 0 \\
+ \theta \sigma^2 & j=1 \\
+ 0 & o.c. \\
+\end{cases}}\\
+cov(\tilde{y}_t, \tilde{y}_{t-j}) &= \begin{cases}
+  (1+\theta^2)\sigma^2  & j = 0 \\
+ \theta\sigma^2 & j=1 \\
+ 0 & o.c.
+\end{cases}
+\end{aligned}
+$$
+it follows that:
+
+$$
+\begin{aligned}
+cov({y}_t, {y}_{t-j})=cov(\tilde{y}_t, \tilde{y}_{t-j})\\
+E(y_t-\mu)(y_{t-j}-\mu)=E(\tilde{y}_t - \mu)(\tilde{y}_{t-j}-\mu) 
+\end{aligned}
+$$
+
+
+# Problem 5
+
+Consider the simple $AR(1)$ process
+
+$$
+(1-\phi L)y_t=\epsilon_t
+$$
+
+where $\{\epsilon_t\}^\infty_{t=\infty}$ is a white noise process.
+
+
+## Show, by recursive substitution, that
+
+$$
+y_{t+s}=\theta^sy_t+ \sum_{i=0}^{s-1} \theta^{i}\epsilon_{t+s-i}
+$$
+
+**Answer**
+Using the properties of the lag operator, let's rewrite the expression $(1-\phi L)y_t=\epsilon_t$ as
+$$
+\begin{aligned}
+y_t-\phi L y_t =\epsilon_t \\
+\end{aligned}
+$$
+then using recursive substitution
+
+$$
+\begin{aligned}
+y_t&=y_t\phi L + \epsilon_t\\
+&=\phi y_{t-1}+\epsilon_t\\
+\\
+y_{t+1}&=\phi y_{t}+\epsilon_{t+1}\\
+&=\phi (\phi y_{t-1}+\epsilon_t) + \epsilon_{t+1}\\
+&=\phi^2 y_{t-1}+\phi\epsilon_t + \epsilon_{t+1}
+\\
+\\
+y_{t+2}&=\phi y_{t+1}+\epsilon_{t+2}\\
+&=\phi (\phi^2 y_{t-1}+\phi\epsilon_t + \epsilon_{t+1}) + \epsilon_{t+2}\\
+&=\phi^3 y_{t-1}+\phi^2\epsilon_t + \theta\epsilon_{t+1} + \epsilon_{t+2}
+\\
+\\
+y_{t+2}&=\phi y_{t+1}+\epsilon_{t+2}\\
+&=\phi (\phi (\phi y_{t-1}+\epsilon_t) + \epsilon_{t+1}) + \epsilon_{t+2}\\
+&=\phi (\phi y_t + \epsilon_{t+1}) + \epsilon_{t+2}\\
+&=\phi^2 y_t + \phi \epsilon_{t+1} + \epsilon_{t+2}
+\end{aligned}
+$$
+Then is easy to see the patern and get the general form:
+
+$$
+y_{t+s}= \phi^s y_t + \sum_{i=0}^{s-1} \theta^{i}\epsilon_{t+s-i}
+$$
+
+
+## Use the above formula to compute the conditional expectation $E(y_{t+s}|I_t)$, where $I_t$ is the information set available at time $t$.
+
+**Answer**
+
+$$
+\begin{aligned}
+E(y_{t+s}|I_t) &= E(\phi^s y_t + \sum_{i=0}^{s-1} \theta^{i}\epsilon_{t+s-i}| I_t)\\
+&= E(\phi^s y_t|I_t) + E(\sum_{i=0}^{s-1} \theta^{i}\epsilon_{t+s-i}| I_t)\\
+&= E(\phi^s y_t|I_t) + \sum_{i=0}^{s-1}\theta^{i}E(\epsilon_{t+s-i}| I_t)\\
+&= \phi^s y_t + \sum_{i=0}^{s-1}\theta^{i}\underbrace{E(\epsilon_{t+s-i}| I_t)}_{=0} \\
+&= \phi^s y_t 
+\end{aligned}
+$$
+
+
+
+
+
