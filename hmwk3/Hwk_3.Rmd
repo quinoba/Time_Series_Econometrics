@@ -1,0 +1,471 @@
+---
+title: "Time Series Econometrics: Homework assignment 3"
+author: "Joaquín Barrutia Álvarez"
+output: 
+  pdf_document:
+    toc: false
+    toc_depth: 1
+    number_sections: true
+geometry: margin=1in
+urlcolor: blue
+header-includes:
+- \usepackage{float}
+- \usepackage{graphicx}
+- \usepackage{amsmath}
+- \usepackage{relsize}
+- \usepackage{cancel}
+- \usepackage{booktabs}
+fig_caption: yes
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+# This chunk sets echo = TRUE as default, that is, print all code.
+# knitr::opts_chunk$set can be used to set other notebook generation options, too.
+# include=FALSE inside curly brackets makes this block not be included in the pdf.
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.pos = "!H", out.extra = "")
+library(ggplot2)
+library(readxl)
+library(vars)
+library(irr)
+library(tidyverse)
+library(readr)
+library(forecast)
+library(kableExtra)
+```
+
+\newcommand{\vc}[1] { \mathbf{#1} }
+\newcommand{\vs}[1] { \boldsymbol{#1} }
+
+# Problem 1
+
+Let
+
+$$
+\begin{aligned}
+y_{1,t}&= 0.750y_{1,t-1}-0.125y_{1,t-2}+0.5y_{2,t-1}+\epsilon_{1,t}\\
+y_{2,t}&= 0.700y_{2,t-1}-0.100y_{2,t-2}+\epsilon_{2,t}
+\end{aligned}
+$$
+where all $(\epsilon_{1,t}, \epsilon_{2,t})$ are i.i.d. $N(\vc0, \vc\Omega)$ for some $2\times 2$ matrix $\vc\Omega$.
+
+## Write the system on the form (10.1.11) in Hamilton.
+
+We can write a vector generalization of the proposed equations:
+
+```{=tex}
+\begin{equation}\begin{aligned}\label{eq:1}
+\vc y_t = \vc c + \vc \Phi_1 \vc y_{t-1} + \vc \Phi_2 \vc y_{t-2} + \vs\epsilon_{t}
+\end{aligned}\end{equation}
+```
+
+where:
+
+$$
+\begin{aligned}
+\vc y_t = \begin{pmatrix}
+y_{1,t}\\
+y_{2, t}
+\end{pmatrix}, \quad \vc \Phi_1= \begin{pmatrix}
+0.750 & 0.5\\
+0 & 0.700
+\end{pmatrix}, \quad \vc \Phi_2= \begin{pmatrix}
+-0.125 & 0\\
+0 & -0.100
+\end{pmatrix}
+\end{aligned}
+$$
+Let $\phi_{ij}^{(1)}$ denote the row $i$ column $j$ element of the matrix $\vc \Phi_1$. Then the first row of the vector system in equation (\ref{eq:1}) specifies that
+
+$$
+\begin{aligned}
+y_{1,t} = c_1 + \phi_{11}^{(1)} y_{1,t-1} + \phi_{12}^{(1)} y_{2,t-1} + \phi_{11}^{(2)} y_{1,t-2} + \phi_{12}^{(2)} y_{2,t-2} +  \epsilon_{1,t}\\
+y_{2,t} = c_2 \phi_{21}^{(1)} y_{1,t-1} + \phi_{22}^{(1)} y_{2,t-1} + \phi_{21}^{(2)} y_{1,t-2} + \phi_{22}^{(2)} y_{2,t-2} + \epsilon_{2,t} \\
+\end{aligned}
+$$
+where:
+
+$$
+\begin{aligned}
+\phi_{11}^{(1)} = 0.750, \quad \phi_{12}^{(1)} = 0.5, \quad \phi_{21}^{(1)} = 0, \quad \phi_{22}^{(1)} = 0.700  \\
+\phi_{11}^{(2)} = -0.125, \quad \phi_{12}^{(2)} = 0, \quad \phi_{21}^{(2)} = 0, \quad \phi_{22}^{(2)} = -0.100
+\end{aligned}
+$$
+
+A vector autoregression is a system in which each variable is regressed on a constant and $p$ of its own lags as well as on $p$ lags of each of the other variables in the VAR. 
+
+Using lag operator notation. Equation (\ref{eq:1}) can be written in the form
+
+$$
+\begin{aligned}
+\left[ \vc I_2 - \vc\Phi_1 L - \vc\Phi_2 L^2 \right] \vc y_t = \vc c + \vs \epsilon_t
+\end{aligned}
+$$
+or 
+
+$$
+\begin{aligned}
+\vc\Phi\left(L\right) \vc y_t = \vc c + \vs \epsilon_t
+\end{aligned}
+$$
+
+where $\vc\Phi\left(L\right)$ indicates an $(2\times 2)$ matrix polynomial in the lag operator $L$.
+
+$$
+\begin{aligned}
+\vc\Phi\left(L\right) = \left[ \delta_{ij} - \phi_{ij}^{(1)}L^1 - \phi_{ij}^{(2)}L^2 \right]
+\end{aligned}
+$$
+
+It is helpful to rewrite Equation (\ref{eq:1}) in terms of a VAR(l) process. Define
+
+$$
+\begin{aligned}
+\vc \xi_t &\equiv \begin{bmatrix}
+\vc y_t\\
+\vc y_{t-1}
+\end{bmatrix} = \begin{bmatrix}
+y_{1,t}\\
+y_{2,t}\\
+y_{1,t-1}\\
+y_{2,t-1}
+\end{bmatrix}\\
+\vc F &\equiv \begin{bmatrix}
+\vc\Phi_1 & \vc\Phi_2\\
+\vc I_2 & \vc 0
+\end{bmatrix} = \begin{bmatrix}
+0.750 & 0.5 & -0.125 & 0 \\
+0 & 0.700 & 0 & -0.100\\
+1 & 0 & 0 & 0\\
+0 & 1 & 0 & 0
+\end{bmatrix}\\
+\vc v_t &\equiv \begin{bmatrix}
+\vc \epsilon_t\\
+\vc 0
+\end{bmatrix} = \begin{bmatrix}
+\epsilon_{1,t}\\
+\epsilon_{2,t}\\
+0\\
+0
+\end{bmatrix}
+\end{aligned}
+$$
+
+The VAR(2) in Equation (\ref{eq:1}) can then be rewritten as the following VAR(l):
+
+```{=tex}
+\begin{equation}\begin{aligned}\label{eq:2}
+\vc \xi_t &= \vc F \vc \xi_{t-1} + \vc v_t\\
+\end{aligned}\end{equation}
+```
+
+
+$$
+\begin{aligned}
+\begin{bmatrix}
+y_{1,t}\\
+y_{2,t}\\
+y_{1,t-1}\\
+y_{2,t-1}
+\end{bmatrix} &= \begin{bmatrix}
+0.750 & 0.5 & -0.125 & 0 \\
+0 & 0.700 & 0 & -0.100\\
+1 & 0 & 0 & 0\\
+0 & 1 & 0 & 0
+\end{bmatrix} \begin{bmatrix}
+y_{1,t-1}\\
+y_{2,t-1}\\
+y_{1,t-2}\\
+y_{2,t-2}
+\end{bmatrix} + \begin{bmatrix}
+\epsilon_{1,t}\\
+\epsilon_{2,t}\\
+0\\
+0
+\end{bmatrix}
+\end{aligned}
+$$
+
+where
+
+$$
+\begin{aligned}
+E(\vc v_t v_{\tau}^\prime) = \begin{cases}
+  \vc Q  &  \text{for } t=\tau \\
+  \vc 0 &  \text{otherwise}
+\end{cases}
+\end{aligned}
+$$
+
+and
+
+$$
+\begin{aligned}
+\vc Q \equiv \begin{bmatrix}
+\vc\Omega & \vc 0\\
+\vc 0 & \vc 0
+\end{bmatrix}
+\end{aligned}
+$$
+
+## Is the system covariance-stationary?
+
+If the eigenvalues of $\vc F$ all lie inside the unit circle, then the VAR turns out to be covariance-stationary.
+
+
+We can check this by computing:
+
+$$
+\begin{aligned}
+\left| \vc F - \vc \lambda \vc I \right| = \vc 0
+\end{aligned}
+$$
+where
+
+$$
+\begin{aligned}
+\lambda \vc I =
+\begin{pmatrix}
+\lambda & 0 & 0 & 0\\
+0 & \lambda & 0 & 0\\
+0 & 0 & \lambda & 0\\
+0 & 0 & 0 & \lambda
+\end{pmatrix}
+\end{aligned}
+$$
+Therefore
+
+$$
+\begin{aligned}
+\left| \vc F - \vc \lambda \vc I \right| = \begin{vmatrix}
+0.750 - \lambda & 0.5 & -0.125 & 0 \\
+0 & 0.700 - \lambda & 0 & -0.100\\
+1 & 0 & - \lambda & 0\\
+0 & 1 & 0 & - \lambda
+\end{vmatrix} =
+\vc 0
+\end{aligned}
+$$
+Let's define
+
+$$
+\begin{aligned}
+\vc A &\equiv \begin{pmatrix}
+0.750 - \lambda & 0.5 & -0.125 & 0 \\
+0 & 0.700 - \lambda & 0 & -0.100\\
+1 & 0 & - \lambda & 0\\
+0 & 1 & 0 & - \lambda
+\end{pmatrix}\\
+\vc B &\equiv \begin{vmatrix}
+ 0.700 - \lambda & 0 & -0.100\\
+ 0 & - \lambda & 0\\
+ 1 & 0 & - \lambda
+\end{vmatrix} = -\lambda^3 + 0.700\lambda^2 - 0.100\lambda\\
+\vc C &\equiv \begin{vmatrix}
+ 0 & 0 & -0.100\\
+ 1 & - \lambda & 0\\
+ 0 & 0 & - \lambda
+\end{vmatrix} = 0\\
+\vc D &\equiv \begin{vmatrix}
+ 0 & 0.700 - \lambda & -0.100\\
+ 1 & 0 & 0\\
+ 0 & 1 & - \lambda
+\end{vmatrix} = -\lambda^2 + 0.700\lambda - 0.100\\
+\vc E &\equiv \begin{vmatrix}
+ 0 & 0.700 - \lambda & 0\\
+ 1 & 0 & -\lambda\\
+ 0 & 1 & 0
+\end{vmatrix}  = 0
+\end{aligned}
+$$
+
+
+Then,
+
+$$
+\begin{aligned}
+|\vc A| &= (0.750-\lambda)(-\lambda^3 + 0.700\lambda^2 - 0.100\lambda) + (-0.125)(-\lambda^2 + 0.700\lambda - 0.100)\\
+&= (0.750-\lambda) (\lambda-\frac{1}{2})(\lambda-\frac{1}{5}) (\lambda-0) + (-0.125)(\lambda-\frac{1}{2})(\lambda-\frac{1}{5})\\
+&= (\lambda-\frac{1}{2})(\lambda-\frac{1}{5}) \left[ -\lambda^2 + 0.750\lambda - 0.125\right]\\
+&= (\lambda-\frac{1}{2})(\lambda-\frac{1}{5}) \left[(\lambda-\frac{1}{2})(\lambda-\frac{1}{4})\right]\\
+&= (\lambda-\frac{1}{2})(\lambda-\frac{1}{5}) (\lambda-\frac{1}{2})(\lambda-\frac{1}{4})
+\end{aligned}
+$$
+The 4 eigenvalues of $\vc F$ are thus given by
+
+$$
+\begin{aligned}
+\lambda_1 = \frac{1}{2}, \quad \lambda_2 = \frac{1}{5}, \quad \lambda_3 = \frac{1}{2}, \quad \lambda_4 = \frac{1}{4}
+\end{aligned}
+$$
+
+Using Proposition 10.1 from Hamilton: The eigenvalues of the matrix $\vc F$ in Equation (\ref{eq:2}) satisfy
+
+```{=tex}
+\begin{equation}\begin{aligned}\label{eq:3}
+\left| \vc I_2 \lambda^2 - \vc \Phi_1 \lambda^1 - \vc \Phi_2 \right|
+\end{aligned}\end{equation}
+```
+
+Hence, our VAR(2) is covariance-stationary since $|\lambda|< 1$ for all values of $\lambda$ satisfying Equation (\ref{eq:3}) (i.e., $\lambda_1 = \frac{1}{2}, \quad \lambda_2 = \frac{1}{5}, \quad \lambda_3 = \frac{1}{2}, \quad \lambda_4 = \frac{1}{4}$)
+
+# Problem 2
+
+## Stock and Watson chose a lag length of 4. Does this seem appropriate?
+
+Usually the  Akaike (AIC) or Bayes (BIC) information criteria are used to select the lag lenght. If we only look at these criteria, we can notice that a lag length of 4 might not look appropiate, in fact these criteria suggest choosing lags of length 11 or 3. However the authors are using a theoretical model which
+incorporates assumptions that identify the causal influence of monetary policy on unemployment, inflation and interest rates. They specifically rely on a version
+of the “Taylor rule,” in which the Federal Reserve is modeled as setting the interest rate based on past rates of inflation and unemployment. The Taylor rule is “backward looking” meaning that the Federal Reserve reacts to past information, in particular to averages of the past four quarters of inflation and
+unemployment. Therefore given this theoretical framework we can argue that chosing a lag length of 4 is appropiate.
+
+```{r, warning=FALSE, message=FALSE}
+swdata <- read_tsv("sw2001.txt")
+df<- swdata %>% dplyr::select(c(Inflation, Unemployment, `Fed Funds`)) %>% 
+  ts(start = c(1960, 1), frequency = 4)
+max <- 24
+lag <- VARselect(df, lag.max = max, type = "const")
+print(lag$selection)
+```
+
+## Replicate their variance decomposition analysis (Table 1B.i-1B.iii)
+
+The forecast error decomposition measures how much of the prediction error for a variable (e.g., inflation) is caused by a specific unexpected event (e.g., an error in predicting unemployment) over a certain time frame (e.g., one year). Think of it as a way to understand the factors contributing to prediction errors, like a partial R-squared, but applied to different time periods. In the case of the recursive VAR, these results are presented in Tables (\ref{tab:tab1}-\ref{tab:tab3}) and suggest significant interactions among the variables. For instance, when looking at a 12-quarter timeframe, 74 percent of the error in predicting the federal funds interest rate can be attributed to unexpected changes in inflation and unemployment within the recursive VAR. Similar, when looking at a 12-quarter timeframe, 34 percent of the error in predicting unemployment can be attributed to unexpected changes in inflation and federal funds interest rate within the recursive VAR.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#load data
+swdata <- read_tsv("sw2001.txt")
+df<- swdata %>% dplyr::select(c(Inflation, Unemployment, `Fed Funds`)) %>% 
+  ts(start = c(1960, 1), frequency = 4)
+
+#estimate VAR
+nlags <- 4
+VAR <- VAR(df, p = nlags, type = "const")
+
+#estimate VD
+VD <- fevd(VAR, n.ahead = 12)
+
+prediction <- predict(VAR, n.ahead = 12, 
+                               se.fit=TRUE,
+                               interval="confidence")
+inf_1 <- (prediction$fcst$Inflation[1,][3]-prediction$fcst$Inflation[1,][1])/
+  1.96
+inf_4 <- (prediction$fcst$Inflation[4,][3]-prediction$fcst$Inflation[4,][1])/
+  1.96
+inf_8 <- (prediction$fcst$Inflation[8,][3]-prediction$fcst$Inflation[8,][1])/
+  1.96
+inf_12 <- (prediction$fcst$Inflation[12,][3]-prediction$fcst$Inflation[12,][1])/
+  1.96
+
+u_1 <- (prediction$fcst$Unemployment[1,][3]-
+          prediction$fcst$Unemployment[1,][1])/
+  1.96
+u_4 <- (prediction$fcst$Unemployment[4,][3]-
+          prediction$fcst$Unemployment[4,][1])/
+  1.96
+u_8 <- (prediction$fcst$Unemployment[8,][3]-
+          prediction$fcst$Unemployment[8,][1])/
+  1.96
+u_12 <- (prediction$fcst$Unemployment[12,][3]-
+           prediction$fcst$Unemployment[12,][1])/
+  1.96
+
+r_1 <- (prediction$fcst$Fed.Funds[1,][3]-
+          prediction$fcst$Fed.Funds[1,][1])/
+  1.96
+r_4 <- (prediction$fcst$Fed.Funds[4,][3]-
+          prediction$fcst$Fed.Funds[4,][1])/
+  1.96
+r_8 <- (prediction$fcst$Fed.Funds[8,][3]-
+          prediction$fcst$Fed.Funds[8,][1])/
+  1.96
+r_12 <- (prediction$fcst$Fed.Funds[12,][3]-
+           prediction$fcst$Fed.Funds[12,][1])/
+  1.96
+
+plot(VD)
+```
+
+
+```{=tex}
+\begin{table}[H]
+\centering 
+	\caption{Variance Decomposition of $\pi$} \label{tab:tab1}
+	\begin{tabular}{lcccc} 
+	\toprule
+		& & \multicolumn{3}{c}{Variance Decomposition (\%)}\\
+		\cmidrule(lr){3-5}\\
+	    Forecast Horizon & Forecast s.e. & $\pi$ & u & R \\
+		\midrule
+		 1 & `r round(inf_1,2)` & `r round(VD$Inflation[1,][1],2)*100`  & `r round(VD$Inflation[1,][2],2)*100` & `r round(VD$Inflation[1,][3],2)*100`\\
+		 4 & `r round(inf_4,2)` & `r round(VD$Inflation[4,][1],2)*100`  & `r round(VD$Inflation[4,][2],2)*100` & `r round(VD$Inflation[4,][3],2)*100`\\
+		 8 & `r round(inf_8,2)` & `r round(VD$Inflation[8,][1],2)*100`  & `r round(VD$Inflation[8,][2],2)*100` & `r round(VD$Inflation[8,][3],2)*100`\\
+		 12 & `r round(inf_12,2)` & `r round(VD$Inflation[12,][1],2)*100`  & `r round(VD$Inflation[12,][2],2)*100` & `r round(VD$Inflation[12,][3],2)*100`\\
+		 \bottomrule
+		\hline 
+	\end{tabular} 
+\end{table} 
+```
+
+```{=tex}
+\begin{table}[H]
+\centering 
+	\caption{Variance Decomposition of u} \label{tab:tab2}
+	\begin{tabular}{lcccc} 
+	\toprule
+		& & \multicolumn{3}{c}{Variance Decomposition (\%)}\\
+		\cmidrule(lr){3-5}\\
+	    Forecast Horizon & Forecast s.e. & $\pi$ & u & R \\
+		\midrule
+		 1 & `r round(u_1,2)` & `r round(VD$Unemployment[1,][1],2)*100`  & `r round(VD$Unemployment[1,][2],2)*100` & `r round(VD$Unemployment[1,][3],2)*100`\\
+		 4 & `r round(u_4,2)` & `r round(VD$Unemployment[4,][1],2)*100`  & `r round(VD$Unemployment[4,][2],2)*100` & `r round(VD$Unemployment[4,][3],2)*100`\\
+		 8 & `r round(u_8,2)` & `r round(VD$Unemployment[8,][1],2)*100`  & `r round(VD$Unemployment[8,][2],2)*100` & `r round(VD$Unemployment[8,][3],2)*100`\\
+		 12 & `r round(u_12,2)` & `r round(VD$Unemployment[12,][1],2)*100`  & `r round(VD$Unemployment[12,][2],2)*100` & `r round(VD$Unemployment[12,][3],2)*100`\\
+		 \bottomrule
+		\hline 
+	\end{tabular} 
+\end{table} 
+```
+		
+```{=tex}
+\begin{table}[H]
+\centering 
+	\caption{Variance Decomposition of R} \label{tab:tab3}
+	\begin{tabular}{lcccc} 
+	\toprule
+		& & \multicolumn{3}{c}{Variance Decomposition (\%)}\\
+		\cmidrule(lr){3-5}\\
+	    Forecast Horizon & Forecast s.e. & $\pi$ & u & R \\
+		\midrule
+		 1 & `r round(r_1,2)` & `r round(VD$Fed.Funds[1,][1],2)*100`  & `r round(VD$Fed.Funds[1,][2],2)*100` & `r round(VD$Fed.Funds[1,][3],2)*100`\\
+		 4 & `r round(r_4,2)` & `r round(VD$Fed.Funds[4,][1],2)*100`  & `r round(VD$Fed.Funds[4,][2],2)*100` & `r round(VD$Fed.Funds[4,][3],2)*100`\\
+		 8 & `r round(r_8,2)` & `r round(VD$Fed.Funds[8,][1],2)*100`  & `r round(VD$Fed.Funds[8,][2],2)*100` & `r round(VD$Fed.Funds[8,][3],2)*100`\\
+		 12 & `r round(r_12,2)` & `r round(VD$Fed.Funds[12,][1],2)*100`  & `r round(VD$Fed.Funds[12,][2],2)*100` & `r round(VD$Fed.Funds[12,][3],2)*100`\\
+		 \bottomrule
+		\hline 
+	\end{tabular} 
+\end{table} 
+```
+		
+## Replicate their impulse response analysis (Figure 1).
+
+The impulse responses for the recursive VAR are shown below. The first Figure displays what happens when inflation unexpectedly goes up by 1 percentage point and how it impacts the three variables, based on real data and the recursive VAR model. The second Figure illustrates the consequences of an unexpected 1 percentage point increase in the unemployment rate, while the third Figure shows the effect on interest rates. Additionally, the red lines represent the 95 percent confidence intervals for each of these impulse responses. These estimations of how variables respond to these surprises reveal patterns of lasting shared changes. For instance, when inflation unexpectedly rises, its effects gradually diminish over 24 quarters, and it is linked to a sustained increase in both unemployment and interest rates. Additionally, when unemployment unexpectedly rises, its effects grows in the first quarters, but then diminish quickly in around 7 quarters, and it is linked to a decrease in both inflation and interest rates in the first quarters after the shcok but then both gradually return to 0. 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height= 4}
+#estimate IRF
+IRF <- irf(VAR, n.ahead = 24)
+plot(IRF)
+```
+
+
+\newpage
+
+# Appendix: Code
+
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
+
+
